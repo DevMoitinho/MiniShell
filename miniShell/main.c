@@ -36,7 +36,7 @@ int main(){
 		trataIn(buffer, entrada,args);
 		
 			
-		if(strcmp(entrada, "exit") == 0){
+		if(strcmp(entrada, "exit") == 0 || strcmp(entrada,"")==0){
 			break;
 		}
 
