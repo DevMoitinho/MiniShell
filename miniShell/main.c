@@ -4,8 +4,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-void trataIn(char in[100], char out[100], char args[100]){
-	int cntx;
+
+//fixes the stdin and splits into in and args 
+void fixIn(char in[100], char out[100], char args[100]){
+	int cntx; //Saves the pointer of the first for to uses on the second
 	for(int i = 0;i<100;i++){
 		if(in[i] == '\n'){
 			return;
@@ -26,23 +28,76 @@ void trataIn(char in[100], char out[100], char args[100]){
 	return;
 }
 
+//Shows current path
+void showPath(char *user){
+	char path[50];
+	char aux[50];
+	getcwd(aux, 50);
+	
+	int count = 3;
+	int i = strlen(aux);
+	do{
+		if(aux[i] == '/'){
+			i--;
+			count--;
+		}else{
+			i--;
+		}
+	}while(count > 0);
+	
+	for(int e = 0 ;e<strlen(aux);e++){
+		path[e] = aux[e+i+1];
+	}
+
+	printf("\033[35m%s:-%s -> \033[0m", user,path);
+
+}
+
+
 int main(){
+	
+	//gets username
+	char *user = getlogin();
+
+	//while of the mini shell
 	while(1){
-		printf("miniShell-> ");
-		char buffer[100] = "";
-		char entrada[100] = "";
-		char args[100] = "";
-		fgets(buffer, sizeof(buffer), stdin);
-		trataIn(buffer, entrada,args);
+		showPath(user); //show current directory
 		
-			
-		if(strcmp(entrada, "exit") == 0 || strcmp(entrada,"")==0){
-			break;
+		//initializing variables
+		char buffer[100] = "";
+		char in[100] = "";
+		char args[100] = "";
+		
+		//getting and fixing commands
+		fgets(buffer, sizeof(buffer), stdin);
+		fixIn(buffer, in,args);
+		
+		//treats special cases	
+		if(strcmp(in,"")==0){
+			continue;
+		}else if(strcmp(in, "exit") == 0){
+			exit(EXIT_SUCCESS);
 		}
 
+		//implementing cd
+		if(strcmp(in, "cd")==0){
+			if(strlen(args) == 0){
+				char p[100] = "/home";
+				strcat(p,user);
+				chdir(p);
+			}
+			chdir(args);
+			continue;
+		}
+
+		//fork and execute comand
 		pid_t pid = fork();
 		if(pid == 0){
-			execlp(entrada,entrada,args,NULL);
+			
+			if(execlp(in,in,args,NULL) == -1){ //if exec fail show msg and kill
+				perror("Erro ao executar comando.\n");
+				exit(EXIT_FAILURE);
+			}
 		}
 		else{
 			wait(NULL);
