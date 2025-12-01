@@ -4,9 +4,20 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+//auxiliar function to count valid elements in a array
+int countElements(char a[10][10]){
+	int count = 0;
+	for(int i; i<10;i++){
+		if(strlen(a[i]) == 0){
+			return count;
+		}
+		count++;
+	}
+	return count;
+}
 
 //fixes the stdin and splits into in and args 
-void fixIn(char in[100], char out[100], char args[100]){
+void fixIn(char in[100], char out[100], char args[10][10]){
 	int cntx; //Saves the pointer of the first for to uses on the second
 	for(int i = 0;i<100;i++){
 		if(in[i] == '\n'){
@@ -18,11 +29,24 @@ void fixIn(char in[100], char out[100], char args[100]){
 		}
 		out[i] = in[i];	
 	}
-	for(int i = 0; i<100-cntx;i++){
-		if(in[i+cntx] == '\n'){
-			return;
+	int x = 0;
+	
+	for(int i = 0; i<10-cntx;i++){
+		int j = 0;
+		while(in[x+cntx] != ' '){
+			if(in[x+cntx] == '\n'){
+				return;
+			}
+			args[i][j] = in[x+cntx];
+			x++;
+			j++;
 		}
-		args[i] = in[i+cntx];
+		x++;
+		//if(in[i+cntx] == '\n'){
+		//	return;
+		//}
+
+		//args[i] = in[i+cntx];
 	}
 
 	return;
@@ -30,10 +54,9 @@ void fixIn(char in[100], char out[100], char args[100]){
 
 //Shows current path
 void showPath(char *user){
-	char path[50];
-	char aux[50];
+	char path[50] = "";
+	char aux[50] = "";
 	getcwd(aux, 50);
-	
 	int count = 3;
 	int i = strlen(aux);
 	do{
@@ -55,6 +78,7 @@ void showPath(char *user){
 
 
 int main(){
+	system("clear");
 	
 	//gets username
 	char *user = getlogin();
@@ -66,7 +90,7 @@ int main(){
 		//initializing variables
 		char buffer[100] = "";
 		char in[100] = "";
-		char args[100] = "";
+		char args[10][10] = {"","","","","","","","","",""};
 		
 		//getting and fixing commands
 		fgets(buffer, sizeof(buffer), stdin);
@@ -81,18 +105,30 @@ int main(){
 
 		//implementing cd
 		if(strcmp(in, "cd")==0){
-			if(strlen(args) == 0){
-				char p[100] = "/home";
-				strcat(p,user);
-				chdir(p);
+			char *path = args[0];
+
+			if(path==NULL || strcmp(path,"") == 0){
+				path = getenv("HOME");
+				if(path == NULL){
+					char aux[256];
+					snprintf(aux,sizeof(aux), "/home/%s",user);
+					path = aux;
+				}
 			}
-			chdir(args);
+			
+			if(chdir(path) != 0){
+				perror("cd");
+			}
+			continue;
+		}
+
+		if(strcmp(in, "clear") == 0){
+			system("clear");
 			continue;
 		}
 
 		//fork and execute comand
-		pid_t pid = fork();
-		if(pid == 0){
+		if(fork() == 0){
 			
 			if(execlp(in,in,args,NULL) == -1){ //if exec fail show msg and kill
 				perror("Erro ao executar comando.\n");
