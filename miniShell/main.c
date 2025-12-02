@@ -4,18 +4,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-//auxiliar function to count valid elements in a array
-int countElements(char a[10][10]){
-	int count = 0;
-	for(int i; i<10;i++){
-		if(strlen(a[i]) == 0){
-			return count;
-		}
-		count++;
-	}
-	return count;
-}
-
 //fixes the stdin and splits into in and args 
 void fixIn(char in[100], char out[100], char args[10][10]){
 	int cntx; //Saves the pointer of the first for to uses on the second
@@ -54,9 +42,17 @@ void fixIn(char in[100], char out[100], char args[10][10]){
 
 //Shows current path
 void showPath(char *user){
-	char path[50] = "";
 	char aux[50] = "";
 	getcwd(aux, 50);
+
+	//Special case for home directory
+	if(strlen(aux) <= strlen(getenv("HOME"))){
+		printf("\033[35m%s:-%s -> \033[0m", user,aux);
+		return;
+	}
+
+	//makes the path for other cases
+	char path[50] = "";
 	int count = 3;
 	int i = strlen(aux);
 	do{
