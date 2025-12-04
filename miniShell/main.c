@@ -4,10 +4,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-//fixes the stdin and splits into in and args 
+//Fixes the stdin and splits into in and args 
+//and returns the total count of args.
 int fixIn(char in[100], char out[100], char args[10][10]){
 	int cntx; //Saves the pointer of the first for to uses on the second
 	int x = 0;
+
+	//First loop to put the command of the
+	//stdin in a separated string (out)
 	for(int i = 0;i<100;i++){
 		if(in[i] == '\n'){
 			return x;
@@ -19,9 +23,15 @@ int fixIn(char in[100], char out[100], char args[10][10]){
 		out[i] = in[i];	
 	}
 
+	//Second loop to put the args in a vector
+	//of strings (args) 
+	//i = arg
+	//j = char in arg
 	for(int i = 0; i<10-cntx;i++){
 		int j = 0;
+		//separate the args by space
 		while(in[x+cntx] != ' '){
+			//if input ends finish and returns x
 			if(in[x+cntx] == '\n'){
 				return x;
 			}
@@ -41,6 +51,7 @@ int fixIn(char in[100], char out[100], char args[10][10]){
 }
 
 //Shows current path
+//user = pointer for username
 void showPath(char *user){
 	char aux[50] = "";
 	getcwd(aux, 50);
@@ -55,6 +66,9 @@ void showPath(char *user){
 	char path[50] = "";
 	int count = 3;
 	int i = strlen(aux);
+	//Uses count = 3 to sets the i
+	//variable so the path only shows
+	//3 directorys
 	do{
 		if(aux[i] == '/'){
 			i--;
@@ -63,7 +77,9 @@ void showPath(char *user){
 			i--;
 		}
 	}while(count > 0);
-	
+
+	//Puts the last 3 directorys in the
+	//path string and print it
 	for(int e = 0 ;e<strlen(aux);e++){
 		path[e] = aux[e+i+1];
 	}
@@ -74,6 +90,7 @@ void showPath(char *user){
 
 
 int main(){
+	//clear terminal before the execution of the shell
 	system("clear");
 	
 	//gets username
@@ -81,9 +98,12 @@ int main(){
 
 	//loop of the mini shell
 	while(1){
-		showPath(user); //show current directory
+		//show current directory
+		showPath(user); 
 		
-		//initializing variables
+		//Initializing variables;
+		//The variables are reset in every loop to its defalt
+		//value so theres no conflicts in actual and previous command
 		char buffer[100] = "";
 		char in[100] = "";
 		char args[10][10] = {"","","","","","","","","",""};
@@ -119,29 +139,28 @@ int main(){
 			continue;
 		}
 
-		/*if(strcmp(in, "clear") == 0){
-			system("clear");
-			continue;
-		}*/
-
+		
 		//fork and execute comand
 		if(fork() == 0){
-			
-			if(argCount > 0){
+
+			//If theres args, execute with them,
+			//else, execute with nothing			
+			if(argCount){
 				
-				if(execlp(in,in,args,NULL) == -1){ //if exec fail show msg and kill
+				if(execlp(in,in,args,NULL) == -1){ 
 					perror("Erro ao executar comando.\n");
 					exit(EXIT_FAILURE);
 				}
 			}else{ 
 				
-				if(execlp(in,in,NULL) == -1){ //if exec fail show msg and kill
+				if(execlp(in,in,NULL) == -1){ 
 					perror("Erro ao executar comando.\n");
 					exit(EXIT_FAILURE);
 				}
 			}
 		}
 		else{
+			//Principal processes waits the other dies
 			wait(NULL);
 		}
 		
