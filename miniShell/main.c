@@ -5,11 +5,12 @@
 #include <sys/wait.h>
 
 //fixes the stdin and splits into in and args 
-void fixIn(char in[100], char out[100], char args[10][10]){
+int fixIn(char in[100], char out[100], char args[10][10]){
 	int cntx; //Saves the pointer of the first for to uses on the second
+	int x = 0;
 	for(int i = 0;i<100;i++){
 		if(in[i] == '\n'){
-			return;
+			return x;
 		}
 		if(in[i] == ' '){
 			cntx = i+1;
@@ -17,27 +18,26 @@ void fixIn(char in[100], char out[100], char args[10][10]){
 		}
 		out[i] = in[i];	
 	}
-	int x = 0;
-	
+
 	for(int i = 0; i<10-cntx;i++){
 		int j = 0;
 		while(in[x+cntx] != ' '){
 			if(in[x+cntx] == '\n'){
-				return;
+				return x;
 			}
+			
 			args[i][j] = in[x+cntx];
 			x++;
 			j++;
+			
 		}
 		x++;
-		//if(in[i+cntx] == '\n'){
-		//	return;
-		//}
+		
+		
 
-		//args[i] = in[i+cntx];
 	}
 
-	return;
+	return x;
 }
 
 //Shows current path
@@ -79,7 +79,7 @@ int main(){
 	//gets username
 	char *user = getlogin();
 
-	//while of the mini shell
+	//loop of the mini shell
 	while(1){
 		showPath(user); //show current directory
 		
@@ -90,7 +90,8 @@ int main(){
 		
 		//getting and fixing commands
 		fgets(buffer, sizeof(buffer), stdin);
-		fixIn(buffer, in,args);
+		int argCount = fixIn(buffer, in,args);
+		
 		
 		//treats special cases	
 		if(strcmp(in,"")==0){
@@ -118,17 +119,26 @@ int main(){
 			continue;
 		}
 
-		if(strcmp(in, "clear") == 0){
+		/*if(strcmp(in, "clear") == 0){
 			system("clear");
 			continue;
-		}
+		}*/
 
 		//fork and execute comand
 		if(fork() == 0){
 			
-			if(execlp(in,in,args,NULL) == -1){ //if exec fail show msg and kill
-				perror("Erro ao executar comando.\n");
-				exit(EXIT_FAILURE);
+			if(argCount > 0){
+				
+				if(execlp(in,in,args,NULL) == -1){ //if exec fail show msg and kill
+					perror("Erro ao executar comando.\n");
+					exit(EXIT_FAILURE);
+				}
+			}else{ 
+				
+				if(execlp(in,in,NULL) == -1){ //if exec fail show msg and kill
+					perror("Erro ao executar comando.\n");
+					exit(EXIT_FAILURE);
+				}
 			}
 		}
 		else{
